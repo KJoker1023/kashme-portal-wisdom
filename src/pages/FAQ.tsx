@@ -11,6 +11,21 @@ import {
 } from "@/components/ui/accordion";
 import { ChevronRight, Search } from 'lucide-react';
 
+// Define proper types for our data
+interface Question {
+  question: string;
+  answer: string;
+}
+
+interface CategoryWithQuestions {
+  category: string;
+  questions: Question[];
+}
+
+interface QuestionWithCategory extends Question {
+  categoryName: string;
+}
+
 const categories = [
   "General Questions",
   "Loan Applications",
@@ -19,7 +34,7 @@ const categories = [
   "Technical Support"
 ];
 
-const faqItems = [
+const faqItems: CategoryWithQuestions[] = [
   {
     category: "General Questions",
     questions: [
@@ -111,18 +126,34 @@ const FAQ = () => {
   const [activeCategory, setActiveCategory] = useState("General Questions");
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Fixed: Properly add category property to each question when filtering
-  const filteredFAQs = searchQuery 
+  const filteredFAQs: Question[] | QuestionWithCategory[] = searchQuery 
     ? faqItems.flatMap(category => 
         category.questions.filter(item => 
           item.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
           item.answer.toLowerCase().includes(searchQuery.toLowerCase())
         ).map(question => ({ 
           ...question, 
-          categoryName: category.category // Store category name in a new property called categoryName
+          categoryName: category.category 
         }))
       )
     : faqItems.find(category => category.category === activeCategory)?.questions || [];
+
+  // Function to save category to URL instead of localStorage
+  const updateCategoryInUrl = (category: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('category', category);
+    window.history.pushState({}, '', url.toString());
+    setActiveCategory(category);
+  };
+  
+  // Check URL for saved category on component mount
+  React.useEffect(() => {
+    const url = new URL(window.location.href);
+    const categoryParam = url.searchParams.get('category');
+    if (categoryParam && categories.includes(categoryParam)) {
+      setActiveCategory(categoryParam);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -170,7 +201,7 @@ const FAQ = () => {
                             ? "bg-kashme-green text-kashme-black font-medium"
                             : "hover:bg-gray-100 text-kashme-darkgray"
                         }`}
-                        onClick={() => setActiveCategory(category)}
+                        onClick={() => updateCategoryInUrl(category)}
                       >
                         <ChevronRight className={`h-4 w-4 mr-2 ${
                           activeCategory === category ? "text-kashme-black" : "text-kashme-darkgray"
@@ -189,11 +220,10 @@ const FAQ = () => {
                     <h3 className="text-xl font-bold text-kashme-black mb-4">Search Results</h3>
                     {filteredFAQs.length > 0 ? (
                       <Accordion type="single" collapsible className="space-y-4">
-                        {filteredFAQs.map((item, index) => (
+                        {(filteredFAQs as QuestionWithCategory[]).map((item, index) => (
                           <AccordionItem key={index} value={`item-${index}`} className="border border-gray-200 rounded-lg overflow-hidden">
                             <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
                               <div className="text-left">
-                                {/* Fixed: Use categoryName instead of category */}
                                 <div className="text-xs text-kashme-green font-medium mb-1">{item.categoryName}</div>
                                 <div className="text-kashme-black font-medium">{item.question}</div>
                               </div>
@@ -221,7 +251,7 @@ const FAQ = () => {
                   <>
                     <h3 className="text-xl font-bold text-kashme-black mb-4">{activeCategory}</h3>
                     <Accordion type="single" collapsible className="space-y-4">
-                      {filteredFAQs.map((item, index) => (
+                      {(filteredFAQs as Question[]).map((item, index) => (
                         <AccordionItem key={index} value={`item-${index}`} className="border border-gray-200 rounded-lg overflow-hidden">
                           <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
                             <div className="text-kashme-black font-medium text-left">{item.question}</div>
