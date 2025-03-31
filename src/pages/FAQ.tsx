@@ -111,12 +111,16 @@ const FAQ = () => {
   const [activeCategory, setActiveCategory] = useState("General Questions");
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Fixed: Properly add category property to each question when filtering
   const filteredFAQs = searchQuery 
     ? faqItems.flatMap(category => 
         category.questions.filter(item => 
           item.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
           item.answer.toLowerCase().includes(searchQuery.toLowerCase())
-        ).map(question => ({ ...question, category: category.category }))
+        ).map(question => ({ 
+          ...question, 
+          categoryName: category.category // Store category name in a new property called categoryName
+        }))
       )
     : faqItems.find(category => category.category === activeCategory)?.questions || [];
 
@@ -189,7 +193,8 @@ const FAQ = () => {
                           <AccordionItem key={index} value={`item-${index}`} className="border border-gray-200 rounded-lg overflow-hidden">
                             <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
                               <div className="text-left">
-                                <div className="text-xs text-kashme-green font-medium mb-1">{item.category}</div>
+                                {/* Fixed: Use categoryName instead of category */}
+                                <div className="text-xs text-kashme-green font-medium mb-1">{item.categoryName}</div>
                                 <div className="text-kashme-black font-medium">{item.question}</div>
                               </div>
                             </AccordionTrigger>
